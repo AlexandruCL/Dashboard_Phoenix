@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import useSWR from "swr";
-import { Empty, ErrorState, Loading, Meter, Pill, Ring, Tooltip } from "@/components/ui";
+import { Bone, Empty, ErrorState, Loading, Meter, Pill, Ring, Tooltip } from "@/components/ui";
 import { gradeColor, pctText } from "@/lib/format";
 import type { Dashboard } from "@/lib/types";
 
@@ -12,7 +12,7 @@ const titleCase = (g: string) => g.toLowerCase().replace(/(^|-)\p{L}/gu, (m) => 
 export default function DashboardPage() {
   const { data, error, isLoading, mutate } = useSWR<Dashboard>("/dashboard", { refreshInterval: 30_000 });
   if (error) return <ErrorState error={error} retry={() => mutate()} />;
-  if (isLoading || !data) return <Loading rows={6} />;
+  if (isLoading || !data) return <DashboardSkeleton />;
 
   const { conducere, efectiv, grades, active_yesterday: ay, active_week: aw } = data;
   return (
@@ -187,5 +187,48 @@ function GradeChart({ rows }: { rows: Dashboard["grade_activity"] }) {
         </>
       )}
     </section>
+  );
+}
+
+function DashboardSkeleton() {
+  return (
+    <div role="status" aria-label="Se încarcă" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <div className="grid-cards">
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} className="glass stat">
+            <Bone w="55%" h={13} />
+            <span style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              {(i === 1 || i === 2) && <Bone w={52} h={52} r={26} />}
+              <Bone w={84} h={40} r={8} />
+            </span>
+            <Bone w="70%" h={11} />
+          </div>
+        ))}
+      </div>
+      <div className="grid-strip">
+        {[0, 1, 2, 3, 4, 5].map((i) => (
+          <div key={i} className="glass" style={{ borderRadius: 14, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 6 }}>
+            <Bone w={34} h={26} />
+            <Bone w="60%" h={10} />
+          </div>
+        ))}
+      </div>
+      <div className="grid-2">
+        <section className="glass panel">
+          <Bone w="40%" h={18} />
+          <Loading rows={5} />
+        </section>
+        <section className="glass panel">
+          <Bone w="50%" h={18} />
+          <div style={{ height: 236, display: "flex", alignItems: "flex-end", gap: 14, padding: "34px 6px 0" }}>
+            {[88, 72, 64, 50, 38, 24].map((p) => (
+              <span key={p} style={{ flex: "1 1 0", display: "flex", justifyContent: "center" }}>
+                <Bone w="min(46px, 100%)" h={p * 1.9} r={10} />
+              </span>
+            ))}
+          </div>
+        </section>
+      </div>
+    </div>
   );
 }

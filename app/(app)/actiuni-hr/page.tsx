@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import useSWR, { useSWRConfig } from "swr";
-import { ConfirmInline, Empty, ErrorState, Loading, Pill, toast } from "@/components/ui";
+import { Bone, ConfirmInline, Empty, ErrorState, Loading, Pill, Select, toast, type Option } from "@/components/ui";
 import { ApiError, post } from "@/lib/api";
 import { addDays, ddmm, ddmmyyyy, duration, hhmm, todayRo, unixToRo, weekday, weekdayLong } from "@/lib/format";
 import type { DayReport, Job, JobResult, Me, Members, MinutesPreview, OpenSessions, SentDay, SessionList, Warns } from "@/lib/types";
@@ -56,15 +56,25 @@ export default function ActiuniHrPage() {
 function MemberSelect({ value, onChange, all }: { value: string; onChange: (uid: string) => void; all?: boolean }) {
   const { data, error } = useSWR<Members>("/members");
   const members = data?.groups.flatMap((g) => g.members).filter((m) => m.discord_id) ?? [];
+  const options: Option[] = [
+    ...(all ? [{ value: "", label: "Toți membrii" }] : []),
+    ...members.map((m) => ({
+      value: m.discord_id!,
+      label: m.name,
+      hint: m.grade,
+      search: `${m.callsign} ${m.name}`,
+      lead: <Pill callsign={m.callsign} grade={m.grade} />,
+    })),
+  ];
   return (
-    <select className="field" value={value} onChange={(e) => onChange(e.target.value)} disabled={!data}>
-      {all ? <option value="">Toți</option> : <option value="">{error ? "Nu am putut încărca membrii" : data ? "Alege membrul" : "Se încarcă…"}</option>}
-      {members.map((m) => (
-        <option key={m.discord_id} value={m.discord_id!}>
-          [{m.callsign}] {m.name}
-        </option>
-      ))}
-    </select>
+    <Select
+      value={value}
+      onChange={onChange}
+      options={options}
+      loading={!data && !error}
+      placeholder={error ? "Nu am putut încărca membrii" : "Alege membrul"}
+      searchPlaceholder="Caută după callsign, nume sau grad"
+    />
   );
 }
 
@@ -214,6 +224,7 @@ function DayTab() {
           <span style={{ fontSize: 13, color: "var(--muted)" }}>
             Monitorizare Activitate{data?.sheet && <> · coloana <strong className="num" style={{ color: "var(--text)" }}>{data.sheet.column}</strong></>}
           </span>
+          {!data && !error && <Bone w={150} h={18} />}
           {data?.sheet && (
             <span className="tag" style={data.sheet.sent ? { background: "rgba(61,123,255,0.22)", color: "#CFE0FF" } : { background: "rgba(255,138,61,0.2)", color: "#FFD2B3" }}>
               {data.sheet.sent ? `Trimisă de ${data.sheet.sent.by} · ${unixToRo(data.sheet.sent.at)}` : "Netrimisă"}
@@ -426,7 +437,14 @@ function AddTab() {
         ) : error ? (
           <ErrorState error={error} />
         ) : !preview ? (
-          <Loading rows={3} />
+          <div role="status" aria-label="Se încarcă" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <Bone w="45%" h={16} />
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0,1fr))", gap: 10 }}>
+              <Bone h={64} r={12} />
+              <Bone h={64} r={12} />
+            </div>
+            <Bone h={6} />
+          </div>
         ) : (
           <>
             {member && (
@@ -584,7 +602,13 @@ function WarnTab() {
         ) : error ? (
           <ErrorState error={error} retry={() => mutate()} />
         ) : !w ? (
-          <Loading rows={2} />
+          <div role="status" aria-label="Se încarcă" style={{ display: "flex", alignItems: "center", gap: 18 }}>
+            <Bone w={76} h={52} r={10} />
+            <span style={{ display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
+              <Bone w={114} h={10} r={5} />
+              <Bone w="60%" h={12} />
+            </span>
+          </div>
         ) : (
           <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
             <span className="num" style={{ fontSize: 52, fontWeight: 700, lineHeight: 1 }}>

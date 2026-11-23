@@ -31,7 +31,7 @@ export default function MembriPage() {
       {error ? (
         <ErrorState error={error} retry={() => mutate()} />
       ) : isLoading || !data ? (
-        <Loading rows={8} />
+        <Loading rows={8} framed />
       ) : groups.length === 0 ? (
         <Empty>{q ? "Niciun membru nu se potrivește căutării." : "Nu există membri activi în sheet."}</Empty>
       ) : (

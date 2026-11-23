@@ -70,7 +70,7 @@ export default function LoguriPage() {
       {error ? (
         <ErrorState error={error} retry={() => mutate()} />
       ) : isLoading || !data ? (
-        <Loading rows={8} />
+        <Loading rows={8} framed />
       ) : rows.length === 0 ? (
         <Empty>{q || filter !== "all" ? "Niciun log nu se potrivește filtrului." : "Nu există loguri încă."}</Empty>
       ) : (
@@ -132,6 +132,7 @@ export default function LoguriPage() {
           </div>
         </div>
       )}
+      {data && size > data.length && <Loading rows={3} framed />}
       {more && (
         <button type="button" className="btn btn-ghost" style={{ alignSelf: "center" }} disabled={isValidating} onClick={() => setSize(size + 1)}>
           {isValidating ? "Se încarcă…" : "Încarcă mai multe"}

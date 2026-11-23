@@ -4,11 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
-import { SWRConfig, useSWRConfig } from "swr";
+import useSWR, { SWRConfig, useSWRConfig } from "swr";
 import { fetcher, post } from "@/lib/api";
-import { addDays, ddmm, todayRo, weekday } from "@/lib/format";
+import { addDays, ddmm, todayRo, unixToRo, weekday } from "@/lib/format";
 import type { Level } from "@/lib/types";
-import { toast, Toaster } from "./ui";
+import { Bone, toast, Toaster } from "./ui";
 
 const ICONS: Record<string, string> = {
   "/": "M4 4h7v7H4zM13 4h7v4h-7zM13 10h7v10h-7zM4 13h7v7H4z",
@@ -67,6 +67,23 @@ function SyncButton() {
     >
       {busy ? "Se sincronizează…" : "Sincronizează"}
     </button>
+  );
+}
+
+// Last time the bot pulled fresh data from the Sheet: by = who pressed Sincronizează, null = automatic refresh.
+function LastSync() {
+  const { data, error } = useSWR<{ at: number | null; by: string | null }>("/sync", { refreshInterval: 30_000 });
+  if (error) return null; // older bot without GET /sync
+  if (!data) return <Bone w="80%" h={11} />;
+  if (!data.at) return null;
+  const text = `${unixToRo(data.at)} · ${data.by ?? "automat"}`;
+  return (
+    <span className="sub" style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+      Ultima sincronizare
+      <span className="ellipsis" title={text} style={{ color: "var(--text-2)" }}>
+        {text}
+      </span>
+    </span>
   );
 }
 
@@ -141,6 +158,7 @@ export function Shell({ me, children }: { me: { name: string; level: Level }; ch
                   </button>
                 </form>
               </div>
+              <LastSync />
             </div>
           </nav>
           <main className="content">

@@ -16,7 +16,7 @@ const STATUS = {
 export default function ConcediiPage() {
   const { data, error, isLoading, mutate } = useSWR<Concedii>("/concedii");
   if (error) return <ErrorState error={error} retry={() => mutate()} />;
-  if (isLoading || !data) return <Loading rows={6} />;
+  if (isLoading || !data) return <Loading rows={6} framed />;
 
   const today = todayRo();
   const ongoing = data.rows.filter((r) => r.status === "ongoing").length;
