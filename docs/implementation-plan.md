@@ -21,26 +21,27 @@ Each phase ends with something that runs and can be checked.
 
 **Done when:** the key is rotated, history is clean, `main` contains the sheet export, and the new repo exists.
 
-## Phase 1: Hosting (Vercel + Tailscale Funnel)
+## Phase 1: Hosting (Vercel + bot on HostMyBot)
 
-1. **Tailscale on the bot's machine:**
-   - install it, log in with a free account, and enable HTTPS certificates and Funnel in the admin console;
-   - run `tailscale funnel --bg 3080`;
-   - note the URL, `https://<machine>.<tailnet>.ts.net`.
-2. **Bot API host:** set `WEB_API_HOST=127.0.0.1` (Funnel forwards to it), and stop exposing `/api/pontaje` on `0.0.0.0`.
+1. **HostMyBot:**
+   - use the server's port allocation (or request a 2nd port in the panel);
+   - note the public `IP:port`;
+   - set `WEB_API_HOST=0.0.0.0` and `WEB_API_PORT=<allocation>`.
+2. **Generate the shared key:**
+   - `python -c "import os,base64;print(base64.b64encode(os.urandom(32)).decode())"`;
+   - store it as `WEB_API_KEY` in the bot's `.env` and in Vercel. Never commit it.
 3. **Vercel:**
-   - import `Dashboard_Phoenix` (framework preset: Next.js);
-   - set the environment variables (design §10, `BOT_API_URL` = the Funnel URL);
+   - import `Dashboard_Phoenix` (preset: Next.js);
+   - set the environment variables (design §10, `BOT_API_URL=http://<IP>:<port>`);
    - set the Discord OAuth redirect to `https://<project>.vercel.app/api/auth/callback`.
-4. **Uptime check:** a free monitor (for example UptimeRobot) on `https://<machine>.<tailnet>.ts.net/health`, so you know when the bot's machine is offline.
-5. **Nightly SQLite backup** on the bot's machine: `sqlite3 .backup`, keeping 14 days.
+4. **Uptime alerts:** turn on HostMyBot's monitoring and uptime alerts, and add a free external monitor (for example UptimeRobot) on the Vercel URL.
+5. **Backups:**
+   - a nightly job in the bot copies `clock_times.db` and `punishments.db` with `sqlite3 .backup`, keeping 7 days;
+   - also use HostMyBot's panel backups. Its terms say backups are your own responsibility.
 
-**Done when:**
-- the Vercel URL serves a placeholder page;
-- `curl https://<machine>.<tailnet>.ts.net/health` answers from anywhere;
-- the bot restarts on reboot (systemd, or Task Scheduler on Windows).
+**Done when:** the Vercel URL serves a placeholder page, and an encrypted `ping` from Next.js to the bot returns `pong` (Phase 2, step 6).
 
-*Alternative (design §2): one Oracle A1 VM with Caddy and a domain. Use it only if the bot's current machine can't stay online.*
+*Alternative (design §2): move the bot to an Oracle AMD micro VM with Tailscale Funnel if real HTTPS is wanted later.*
 
 ## Phase 2: Bot API (BotPontajeProject, branch `web-api`)
 
@@ -78,11 +79,12 @@ Each phase ends with something that runs and can be checked.
 
    Add unit tests with fixed sheet fixtures (pytest).
 6. **`/api/web/*` endpoints** (design §8):
-   - Every route checks the bearer token. It also checks the HMAC signature and timestamp.
-   - `X-Actor-Id` goes through the role cache.
+   - One aiohttp route, `POST /api/web/rpc`, implements the encrypted envelope (design §2.1): decrypt and authenticate, check `ts` within ±60 s, check the `req_id` replay cache, dispatch to the logical endpoint, encrypt the response.
+   - Add a `ping` method for setup checks, and unit tests for tampered, expired and replayed envelopes.
+   - The envelope's `actor_id` goes through the role cache.
    - Returns JSON errors (`401`, `403`, `409 already_sent`, `422`).
    - Add the background job runner for sheet sends.
-7. **Bind host from `WEB_API_HOST`** (127.0.0.1, published through Funnel), and add request size limits and per-IP rate limits.
+7. **Bind host and port from `WEB_API_HOST` / `WEB_API_PORT`** (the HostMyBot allocation), and add request size limits (64 KB) and per-IP rate limits.
 
 **Done when:**
 - pytest passes;
@@ -101,7 +103,11 @@ Each phase ends with something that runs and can be checked.
    - `/api/auth/logout`.
    - Log `web-login` / `web-denied` through the bot.
 4. **Middleware:** if there's no session, send the user to `/login`; Loguri requires Conducere. If the bot returns 403, destroy the session and show the denied screen.
-5. **Bot client** (`lib/bot.ts`), server-only: adds the token, the HMAC header and `X-Actor-Id`, and maps errors to typed results.
+5. **Bot client** (`lib/bot.ts`), server-only:
+   - builds the AES-256-GCM envelope with `node:crypto` (actor, ts, req_id inside);
+   - decrypts and authenticates the response;
+   - maps errors to typed results;
+   - has a test that round-trips with the Python implementation (shared test vectors).
 6. **Layout:** scene background with the logo, the glass window, the sidebar (groups filtered by level, user card, Deconectare), the Sincronizează button and the responsive stack on phones.
 
 **Done when:** an HR account logs in and sees the empty layout, a non-HR account sees the denied screen, and a Conducere account sees Loguri in the menu.
@@ -144,11 +150,12 @@ After every write, invalidate the SWR keys and show a short toast.
 
 1. **Deploy:**
    - Vercel deploys every push to `main`; pull requests get preview URLs.
-   - The bot is deployed as today (pull + restart the service).
+   - The bot is deployed as today on HostMyBot: upload or pull, then restart from the panel.
 2. **Security pass:**
    - secrets only in environment variables;
-   - the bot API only answers signed requests (token + HMAC + timestamp);
-   - the Funnel URL serves only `/api/web/*` and `/health`;
+   - the bot's port only answers valid encrypted envelopes; everything else gets a bare 400;
+   - `WEB_API_KEY` exists only in the bot's `.env` and in Vercel;
+   - the old `/api/pontaje` is moved behind the envelope or switched off;
    - cookies are `Secure`, `SameSite=Lax`;
    - writes go through POST only, with a CSRF check.
 3. **Acceptance test with real accounts:**
