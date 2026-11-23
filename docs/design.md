@@ -24,8 +24,8 @@ Visual reference (canvas): https://claude.ai/artifact/XHWQ8Q72EpcFr8zkbD67NX
 ```
 Browser ──HTTPS──► Next.js on Vercel
                       │  server-side only
-                      ▼  https://<machine>.<tailnet>.ts.net  (Tailscale Funnel → 127.0.0.1:3080)
-                      │  Bearer token + HMAC + X-Actor-Id
+                      ▼  http://<hostmybot-IP>:<port>/api/web/*  (HostMyBot port allocation)
+                      │  body encrypted + authenticated with AES-256-GCM (shared key, timestamp, actor inside)
                                                   Bot (discord.py + aiohttp API)
                                                     ├─ Discord (one client, built-in rate limiter, no privileged intents)
                                                     ├─ SQLite: clock_times.db, punishments.db (+ new tables)
@@ -33,39 +33,45 @@ Browser ──HTTPS──► Next.js on Vercel
 ```
 
 - **The browser never calls the bot or Discord directly.** Next.js Route Handlers and Server Actions act as the backend-for-frontend.
-- **Next.js holds the session** (an encrypted, httpOnly cookie). It forwards the signed-in user's Discord ID as `X-Actor-Id`. The bot trusts that header only together with the shared `WEB_API_TOKEN`.
+- **Next.js holds the session** (an encrypted, httpOnly cookie). It puts the signed-in user's Discord ID (`actor_id`) inside the encrypted envelope (§2.1), so the bot can trust it.
 - **Long jobs:** Trimite Săptămâna makes about 40 Google requests. The bot runs it as a background job (`202 {job_id}`), and the app polls `GET /api/web/jobs/{id}`. This also keeps every Vercel function call short.
 
-### Deployment (chosen: Vercel + Tailscale Funnel)
-
-This is the easiest setup that works: no server to administer, no domain to buy, no ports to open, and HTTPS on both ends.
+### Deployment (chosen: Vercel + bot on HostMyBot)
 
 - **Next.js on Vercel (Hobby, free):**
-  - HTTPS on `dashboard-phoenix.vercel.app`; a custom domain can be added later;
+  - HTTPS on `dashboard-phoenix.vercel.app` (a custom domain can be added later);
   - a deploy on every push to `main`;
   - environment variables set in the Vercel dashboard.
 
-  The Hobby plan is for personal, non-commercial use, which fits this project.
-- **The bot stays on the machine where it runs now.** Its API is published with **Tailscale Funnel**:
-  - `tailscale funnel 3080` gives a stable public URL, `https://<machine>.<tailnet>.ts.net`, with a valid certificate;
-  - no domain, no router or firewall changes, and it works behind NAT (home PC included);
-  - the bot API itself still listens on `127.0.0.1:3080`; Funnel forwards to it.
-- **Protecting the public bot API:**
-  - `Authorization: Bearer $WEB_API_TOKEN` on every request;
-  - an HMAC-SHA256 signature over `timestamp + method + path + body` (`X-Signature`, `X-Timestamp`, rejected if more than 60 s old) to block replays;
-  - rate limits per IP.
+  The Hobby plan is for personal, non-commercial use.
+- **The bot stays on HostMyBot** (shared panel, 2 GB RAM, 1–2 port allocations, no SSH, no HTTPS or reverse proxy).
+  - The web API listens on the allocated port: `WEB_API_HOST=0.0.0.0`, `WEB_API_PORT=<allocation>`.
+  - The server can only serve plain HTTP, so the traffic is protected at the application level (§2.1) instead of with TLS.
+- **The old public `/api/pontaje`** on `0.0.0.0:3080` is moved behind the same envelope, or switched off if nothing outside uses it.
 
-  Only `/api/web/*` and `/health` are served. The old public `/api/pontaje` on `0.0.0.0` is closed, or put behind the same checks.
-- **Fallback if Funnel isn't wanted:** a Cloudflare Tunnel (`cloudflared`). It needs a domain on Cloudflare, for example `laur-alexandru-cristea.tech` with its DNS moved to Cloudflare. The URL then becomes `https://bot-api.<domain>`.
+### 2.1 Encrypted envelope (instead of HTTPS)
 
-**Alternative: everything on one Oracle Always Free VM**
-- **What runs there:** bot + Next.js (`output: "standalone"`) + Caddy, on one Ampere A1 VM (at most 2 OCPU / 12 GB since Aug 2026).
-- **Pros:** the bot API never leaves `127.0.0.1`.
-- **Cons:**
-  - you administer the VM;
-  - you need a domain (an A record, DuckDNS or `sslip.io`) for Caddy's Let's Encrypt certificate;
-  - you must open ports 80/443 in both the OCI Security List and iptables;
-  - A1 capacity is often unavailable.
+- **Every request** from Next.js to the bot is `POST /api/web/rpc` with an opaque body:
+  - `base64(nonce[12] ‖ AES-256-GCM(key, nonce, plaintext, aad = "dp1"))`;
+  - plaintext = JSON `{v: 1, ts, req_id, actor_id, method, path, body}`.
+- **Every response** uses the same envelope, built from a fresh random nonce, with plaintext `{req_id, status, body}`.
+- **Key:** `WEB_API_KEY`, 32 random bytes, stored on both sides and never sent over the network.
+- **The bot rejects:**
+  - envelopes that fail decryption or authentication (wrong key, tampered data);
+  - a `ts` older or newer than 60 s;
+  - a `req_id` already seen in the last 120 s (replay cache).
+- **Error handling:** errors that happen before decryption get a plain `400` with no details; real errors are only returned inside the encrypted response.
+- **What this protects:**
+  - observers on the network can't read members, minutes, warn reasons or the actor's identity;
+  - they can't forge, change or replay a request.
+
+  They can still see that traffic exists, its size and its timing.
+- **What it doesn't replace:**
+  - per-IP rate limits on the port;
+  - key rotation: two accepted keys at once (`WEB_API_KEY`, `WEB_API_KEY_OLD`), so the key can change without downtime.
+- **Libraries:** `cryptography.hazmat.primitives.ciphers.aead.AESGCM` in the bot, `node:crypto` (`aes-256-gcm`) in Next.js. No other dependencies.
+
+**Alternative if standard TLS is wanted later:** move the bot to a free Oracle AMD micro VM (1 GB), where Tailscale Funnel (or Caddy and a domain) gives a real HTTPS address. The API stays the same; only the transport changes.
 
 ## 3. Data sources
 
@@ -107,7 +113,7 @@ This is the easiest setup that works: no server to administer, no domain to buy,
   - Anyone else sees the "Nu ai acces la acest panou" screen, and a `web-denied` entry is logged.
 - **Re-check every 5 minutes, not on every action:**
   - The bot keeps a role cache per user: `{level, checked_at}`.
-  - Every API call with an `X-Actor-Id` uses the cache. Only if `checked_at` is older than 5 minutes does the bot do one `guild.fetch_member(id)` (a REST call, no members intent needed) and update it.
+  - Every API call uses the cache for its `actor_id`. Only if `checked_at` is older than 5 minutes does the bot do one `guild.fetch_member(id)` (a REST call, no members intent needed) and update it.
   - If the member left (404) or lost the roles, the call returns 403, and Next.js signs the user out with the denied screen.
   - All Discord calls go through the bot's discord.py client, which respects rate limits. Failed calls are never retried in a loop, so Discord/Cloudflare won't ban the IP for invalid requests.
 - **Per-feature rules, same as the bot:**
@@ -147,7 +153,7 @@ The member pickers use the members list from the sheet (callsign + name → Disc
 
 ## 8. Bot API (new endpoints)
 
-All endpoints are under `/api/web/` and require `Authorization: Bearer $WEB_API_TOKEN` and `X-Actor-Id`. The roles in the "Level" column are checked via the role cache (§5).
+On the wire, every call is a single `POST /api/web/rpc` carrying the encrypted envelope (§2.1). Inside, `method` and `path` select one of the logical endpoints below. The actor comes from the envelope, and the roles in the "Level" column are checked via the role cache (§5).
 
 | Method & path | Level | Purpose |
 |---|---|---|
@@ -195,9 +201,8 @@ All endpoints are under `/api/web/` and require `Authorization: Bearer $WEB_API_
 ## 10. Configuration (new)
 
 Bot `.env`:
-- `WEB_API_TOKEN`
-- `WEB_API_HOST=127.0.0.1` (Funnel or the tunnel forwards to it)
-- `WEB_API_HMAC_SECRET`
+- `WEB_API_HOST=0.0.0.0`, `WEB_API_PORT=<HostMyBot allocation>`
+- `WEB_API_KEY` (32 bytes, base64), optional `WEB_API_KEY_OLD`
 - `WEB_HR_ROLE_IDS`
 - `WEB_CONDUCERE_ROLE_IDS`
 - `ROLE_CACHE_TTL_SECONDS=300`
@@ -209,7 +214,6 @@ Next.js `.env`:
 - `DISCORD_CLIENT_SECRET`
 - `DISCORD_GUILD_ID`
 - `SESSION_SECRET`
-- `BOT_API_URL=https://<machine>.<tailnet>.ts.net`
-- `WEB_API_HMAC_SECRET`
-- `WEB_API_TOKEN`
+- `BOT_API_URL=http://<hostmybot-IP>:<port>`
+- `WEB_API_KEY` (same value as the bot)
 - `APP_URL=https://<domain>`
