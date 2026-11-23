@@ -43,6 +43,7 @@ export default function MembriPage() {
               <section key={g.grade} className="glass" style={{ borderRadius: 18, overflow: "hidden" }}>
                 <button
                   type="button"
+                  className="group-toggle"
                   aria-expanded={open}
                   onClick={() => setClosed({ ...closed, [g.grade]: open })}
                   style={{
@@ -63,11 +64,16 @@ export default function MembriPage() {
                   <span className="num" style={{ fontSize: 15, fontWeight: 600, letterSpacing: "0.06em" }}>
                     {g.grade}
                   </span>
-                  <span style={{ fontSize: 13, color: "var(--muted)" }}>
-                    {g.members.length} membri {open ? "▾" : "▸"}
+                  <span style={{ fontSize: 13, color: "var(--muted)", display: "flex", alignItems: "center", gap: 6 }}>
+                    {g.members.length} membri
+                    <svg className="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M6 9l6 6 6-6" />
+                    </svg>
                   </span>
                 </button>
-                {open && (
+                {/* Always mounted so height can animate; inert keeps the closed rows out of Tab order. */}
+                <div className="collapse" data-open={open} inert={!open}>
+                  <div>
                   <div className="scroll-x">
                     <div style={{ minWidth: 640, padding: "6px 10px 10px" }}>
                       <div className="th" style={{ display: "grid", gridTemplateColumns: COLS, gap: 10, padding: 8 }}>
@@ -96,7 +102,8 @@ export default function MembriPage() {
                       ))}
                     </div>
                   </div>
-                )}
+                  </div>
+                </div>
               </section>
             );
           })}

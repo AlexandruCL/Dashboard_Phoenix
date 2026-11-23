@@ -25,7 +25,7 @@ function useRefreshAll() {
 export default function ActiuniHrPage() {
   const [tab, setTab] = useState<Tab>("open");
   return (
-    <>
+    <div className="fit">
       <div className="glass tabs" role="tablist" aria-label="Acțiuni HR">
         {TABS.map(([id, label]) => (
           <button
@@ -42,14 +42,14 @@ export default function ActiuniHrPage() {
           </button>
         ))}
       </div>
-      <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <div key={tab} role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`} className="fit-scroll">
         {tab === "open" && <OpenTab />}
         {tab === "day" && <DayTab />}
         {tab === "add" && <AddTab />}
         {tab === "del" && <DeleteTab />}
         {tab === "warn" && <WarnTab />}
       </div>
-    </>
+    </div>
   );
 }
 

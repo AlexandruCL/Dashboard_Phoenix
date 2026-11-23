@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import useSWR from "swr";
-import { Empty, ErrorState, Loading, Meter, SearchBox } from "@/components/ui";
+import { Empty, ErrorState, Loading, Meter, SearchBox, toast } from "@/components/ui";
+import { post } from "@/lib/api";
 import { addDays, ddmm, ddmmyyyy, searchMatch, todayRo, weekday } from "@/lib/format";
 import type { Cell, Pontaje } from "@/lib/types";
 
@@ -20,6 +21,20 @@ export default function PontajePage() {
   const [q, setQ] = useState("");
   const { data, error, isLoading, mutate } = useSWR<Pontaje>("/pontaje");
   const today = todayRo();
+  const [busy, setBusy] = useState(false);
+
+  async function updateNames() {
+    setBusy(true);
+    try {
+      const { rows } = await post<{ rows: number }>("/pontaje/names");
+      await mutate();
+      toast(rows ? `Nume actualizate în Sheet: ${rows} rânduri.` : "Numele din Sheet erau deja la zi.");
+    } catch (e) {
+      toast((e as Error).message, true);
+    } finally {
+      setBusy(false);
+    }
+  }
 
   const rows = data?.rows.filter((r) => searchMatch(q, r.callsign, r.name)) ?? [];
   const weekTarget = (data?.daily_target ?? 100) * 7;
@@ -37,6 +52,9 @@ export default function PontajePage() {
           </div>
         )}
         <span className="hint">Se resetează la final de săptămână</span>
+        <button type="button" className="btn btn-ghost btn-sm" disabled={busy} onClick={updateNames} title="Rulează și automat în fiecare noapte la 00:00">
+          {busy ? "Se actualizează…" : "Actualizează numele"}
+        </button>
       </div>
       <p className="hint" style={{ margin: 0 }}>
         <span style={{ color: "#8FA8FF" }}>CO</span> concediu · <span style={{ color: "#FFAA6B" }}>portocaliu</span> sub {data?.daily_target ?? 100} min ·{" "}

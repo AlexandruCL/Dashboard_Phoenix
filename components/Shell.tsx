@@ -50,8 +50,10 @@ function SyncButton() {
   return (
     <button
       type="button"
-      className="btn btn-ghost btn-sm"
+      className="btn btn-ghost icon-btn"
       disabled={busy}
+      aria-label={busy ? "Se sincronizează" : "Sincronizează datele din Sheet"}
+      title="Sincronizează"
       onClick={async () => {
         setBusy(true);
         try {
@@ -65,7 +67,9 @@ function SyncButton() {
         }
       }}
     >
-      {busy ? "Se sincronizează…" : "Sincronizează"}
+      <svg className={busy ? "spin" : undefined} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M20 11a8 8 0 0 0-14.9-3.5M4 4v4h4M4 13a8 8 0 0 0 14.9 3.5M20 20v-4h-4" />
+      </svg>
     </button>
   );
 }
@@ -75,10 +79,10 @@ function LastSync() {
   const { data, error } = useSWR<{ at: number | null; by: string | null }>("/sync", { refreshInterval: 30_000 });
   if (error) return null; // older bot without GET /sync
   if (!data) return <Bone w="80%" h={11} />;
-  if (!data.at) return null;
+  if (!data.at) return <span className="sub">Nicio sincronizare încă</span>;
   const text = `${unixToRo(data.at)} · ${data.by ?? "automat"}`;
   return (
-    <span className="sub" style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+    <span className="sub" style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
       Ultima sincronizare
       <span className="ellipsis" title={text} style={{ color: "var(--text-2)" }}>
         {text}
@@ -150,16 +154,19 @@ export function Shell({ me, children }: { me: { name: string; level: Level }; ch
                   </span>
                 </div>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <SyncButton />
-                <form action="/api/auth/logout" method="post">
-                  <button type="submit" className="linkbtn">
-                    Deconectare
-                  </button>
-                </form>
+                <LastSync />
               </div>
-              <LastSync />
             </div>
+            <form action="/api/auth/logout" method="post">
+              <button type="submit" className="nav-item logout">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l-5-5 5-5M5 12h11" />
+                </svg>
+                <span>Deconectare</span>
+              </button>
+            </form>
           </nav>
           <main className="content">
             <header className="page-head">

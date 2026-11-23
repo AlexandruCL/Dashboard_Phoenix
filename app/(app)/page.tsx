@@ -16,7 +16,7 @@ export default function DashboardPage() {
 
   const { conducere, efectiv, grades, active_yesterday: ay, active_week: aw } = data;
   return (
-    <>
+    <div className="fit">
       <section aria-label="Evidență grade" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <div className="grid-cards">
           <div className="glass stat" style={{ background: "linear-gradient(135deg, rgba(10,36,114,0.55), rgba(17,85,204,0.18))" }}>
@@ -75,11 +75,11 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      <div className="grid-2">
+      <div className="grid-2 fill">
         <Top5 rows={data.top5} />
         <GradeChart rows={data.grade_activity} />
       </div>
-    </>
+    </div>
   );
 }
 
@@ -96,7 +96,7 @@ function Top5({ rows }: { rows: Dashboard["top5"] }) {
       {rows.length === 0 ? (
         <Empty>Nimeni nu s-a pontat încă săptămâna aceasta.</Empty>
       ) : (
-        <div className="scroll-x">
+        <div className="list-scroll">
           <div style={{ minWidth: 400 }}>
           <div className="th" style={{ display: "grid", gridTemplateColumns: cols, gap: 8, padding: "0 8px 6px" }}>
             <span>Callsign</span>
@@ -105,7 +105,7 @@ function Top5({ rows }: { rows: Dashboard["top5"] }) {
             <span style={{ textAlign: "right" }}>Total min</span>
           </div>
           {rows.map((t) => (
-            <div key={t.callsign} className="row" style={{ display: "grid", gridTemplateColumns: cols, gap: 8, alignItems: "center", padding: 8, fontSize: 14 }}>
+            <div key={t.callsign} className="row" style={{ display: "grid", gridTemplateColumns: cols, gap: 8, alignItems: "center", padding: "6px 8px", fontSize: 14 }}>
               <Pill callsign={t.callsign} grade={t.grade} />
               <span className="ellipsis">{t.name}</span>
               <span className="ellipsis" style={{ color: "var(--muted)", fontSize: 12.5 }}>
@@ -141,13 +141,13 @@ function GradeChart({ rows }: { rows: Dashboard["grade_activity"] }) {
         <Empty>Nicio zi încheiată încă săptămâna aceasta.</Empty>
       ) : (
         <>
-          <div style={{ position: "relative", height: 236, display: "flex", alignItems: "flex-end", gap: 14, padding: "34px 6px 0", borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
+          <div className="chart-area" style={{ position: "relative", display: "flex", alignItems: "flex-end", gap: 14, padding: "34px 6px 0", borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
             {bars.map((c) => {
-              const h = Math.round((c.pct ?? 0) * 1.9);
+              const h = Math.max(c.pct ?? 0, 2); // % of the chart height; 2% keeps a 0 visible
               return (
                 <div key={c.grade} style={{ position: "relative", flex: "1 1 0", display: "flex", justifyContent: "center", alignItems: "flex-end", height: "100%" }}>
                   {hover === c.grade && (
-                    <div role="tooltip" className="tip" style={{ left: "50%", transform: "translateX(-50%)", bottom: h + 10 }}>
+                    <div role="tooltip" className="tip" style={{ left: "50%", transform: "translateX(-50%)", bottom: `calc(${h}% + 10px)` }}>
                       <strong style={{ fontWeight: 600 }}>{c.grade}</strong> ·{" "}
                       <span className="num" style={{ fontWeight: 700, color: "var(--blue-soft)" }}>
                         {pctText(c.pct)}%
@@ -165,7 +165,7 @@ function GradeChart({ rows }: { rows: Dashboard["grade_activity"] }) {
                     style={{
                       width: "100%",
                       maxWidth: 46,
-                      height: Math.max(h, 4),
+                      height: `${h}%`,
                       border: "1px solid rgba(255,255,255,0.3)",
                       borderRadius: "10px 10px 4px 4px",
                       padding: 0,
