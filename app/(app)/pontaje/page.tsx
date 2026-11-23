@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import useSWR from "swr";
-import { Empty, ErrorState, Loading, Meter, SearchBox, toast } from "@/components/ui";
+import { Empty, ErrorState, Loading, Meter, Pill, SearchBox, toast } from "@/components/ui";
 import { post } from "@/lib/api";
 import { addDays, ddmm, ddmmyyyy, searchMatch, todayRo, weekday } from "@/lib/format";
 import type { Cell, Pontaje } from "@/lib/types";
 
-const COLS = "minmax(170px,1.7fr) repeat(7, minmax(52px,1fr)) 106px";
+const COLS = "74px minmax(170px,1.7fr) repeat(7, minmax(52px,1fr)) 106px";
 
 function cellView(c: Cell, target: number): { text: string; color: string; label: string } {
   if (c.value === "CO") return { text: "CO", color: "#8FA8FF", label: "concediu" };
@@ -64,11 +64,12 @@ export default function PontajePage() {
       {error ? (
         <ErrorState error={error} retry={() => mutate()} />
       ) : isLoading || !data ? (
-        <Loading rows={8} framed pill={false} />
+        <Loading rows={8} framed />
       ) : (
         <div className="glass scroll-x" style={{ borderRadius: 18 }}>
-          <div style={{ minWidth: 700, padding: "8px 10px 12px" }} role="table" aria-label="Pontaje săptămâna curentă">
+          <div style={{ minWidth: 780, padding: "8px 10px 12px" }} role="table" aria-label="Pontaje săptămâna curentă">
             <div role="row" className="th" style={{ display: "grid", gridTemplateColumns: COLS, gap: 6, padding: "10px 8px", borderBottom: "1px solid var(--line)" }}>
+              <span role="columnheader">Callsign</span>
               <span role="columnheader">Nume</span>
               {data.days.map((d) => (
                 <span
@@ -90,6 +91,9 @@ export default function PontajePage() {
             ) : (
               rows.map((r) => (
                 <div role="row" key={r.callsign} className="row" style={{ display: "grid", gridTemplateColumns: COLS, gap: 6, padding: 8, fontSize: 14, alignItems: "center" }}>
+                  <span role="cell">
+                    <Pill callsign={r.callsign} grade={r.grade} />
+                  </span>
                   <span role="cell" style={{ display: "flex", flexDirection: "column" }}>
                     <span>{r.name}</span>
                     <span className="sub">{r.grade}</span>

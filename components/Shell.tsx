@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import useSWR, { SWRConfig, useSWRConfig } from "swr";
 import { fetcher, post } from "@/lib/api";
 import { addDays, ddmm, todayRo, unixToRo, weekday } from "@/lib/format";
@@ -68,7 +68,7 @@ function SyncButton() {
       }}
     >
       <svg className={busy ? "spin" : undefined} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <path d="M20 11a8 8 0 0 0-14.9-3.5M4 4v4h4M4 13a8 8 0 0 0 14.9 3.5M20 20v-4h-4" />
+        <path d="M21 3v6h-6M3 21v-6h6M20.1 15A8.5 8.5 0 0 1 5.3 18.4L3 15M3.9 9A8.5 8.5 0 0 1 18.7 5.6L21 9" />
       </svg>
     </button>
   );
@@ -94,6 +94,30 @@ function LastSync() {
 export function Shell({ me, children }: { me: { name: string; level: Level }; children: ReactNode }) {
   const pathname = usePathname();
   const current = Object.keys(PAGES).find((p) => (p === "/" ? pathname === "/" : pathname.startsWith(p))) ?? "/";
+  // The highlight jumps to the clicked item right away; the route catches up when the page loads.
+  const [clicked, setClicked] = useState<{ href: string; from: string } | null>(null);
+  const active = clicked?.from === pathname ? clicked.href : current;
+  const navRef = useRef<HTMLDivElement>(null);
+  const pillRef = useRef<HTMLSpanElement>(null);
+  useLayoutEffect(() => {
+    const nav = navRef.current;
+    const pill = pillRef.current;
+    if (!nav || !pill) return;
+    const place = () => {
+      const el = nav.querySelector<HTMLElement>(`[data-href="${active}"]`);
+      pill.style.opacity = el ? "1" : "0";
+      if (!el) return;
+      pill.style.transform = `translate(${el.offsetLeft}px, ${el.offsetTop}px)`;
+      pill.style.width = `${el.offsetWidth}px`;
+      pill.style.height = `${el.offsetHeight}px`;
+    };
+    place();
+    // Enable sliding only after the first placement, so the pill doesn't fly in from the corner on load.
+    requestAnimationFrame(() => pill.setAttribute("data-ready", ""));
+    const ro = new ResizeObserver(place);
+    ro.observe(nav);
+    return () => ro.disconnect();
+  }, [active]);
   const [crumb, title] = PAGES[current];
   const initials = me.name
     .replace(/^\[[^\]]*\]\s*/, "")
@@ -116,12 +140,21 @@ export function Shell({ me, children }: { me: { name: string; level: Level }; ch
                 <span className="brand-sub">PHOENIX · LOS SANTOS</span>
               </div>
             </div>
-            <div className="nav">
+            <div className="nav" ref={navRef}>
+              <span ref={pillRef} className="nav-pill" aria-hidden="true" />
               {GROUPS.filter((g) => !g.conducere || me.level === "Conducere").map((g) => (
                 <div key={g.title} className="nav-group">
                   <span className="nav-title">{g.title}</span>
                   {g.items.map((href) => (
-                    <Link key={href} href={href} className="nav-item" aria-current={href === current ? "page" : undefined}>
+                    <Link
+                      key={href}
+                      href={href}
+                      className="nav-item"
+                      data-href={href}
+                      data-active={href === active || undefined}
+                      aria-current={href === current ? "page" : undefined}
+                      onClick={() => setClicked({ href, from: pathname })}
+                    >
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                         <path d={ICONS[href]} />
                       </svg>

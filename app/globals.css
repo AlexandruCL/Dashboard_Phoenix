@@ -129,7 +129,19 @@ h1, h2 { margin: 0; }
 .brand { display: flex; align-items: center; gap: 12px; padding: 0 6px; }
 .brand-name { font-size: 20px; font-weight: 700; letter-spacing: 0.08em; }
 .brand-sub { font-size: 11px; color: var(--muted-2); letter-spacing: 0.12em; white-space: nowrap; }
-.nav { display: flex; flex-direction: column; gap: 16px; }
+.nav { position: relative; display: flex; flex-direction: column; gap: 16px; }
+/* One shared highlight that slides to the chosen page, so the eye follows the move instead of seeing two items blink. */
+.nav-pill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: 12px;
+  pointer-events: none;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: linear-gradient(100deg, rgba(59, 107, 255, 0.45), rgba(168, 85, 247, 0.3) 55%, rgba(255, 77, 61, 0.35));
+  box-shadow: 0 6px 20px rgba(80, 60, 255, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+.nav-pill[data-ready] { transition: transform 0.38s cubic-bezier(0.2, 0.8, 0.2, 1), width 0.38s cubic-bezier(0.2, 0.8, 0.2, 1), height 0.38s cubic-bezier(0.2, 0.8, 0.2, 1); }
 .nav-group { display: flex; flex-direction: column; gap: 4px; }
 .nav-title { font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted-3); padding: 0 14px 2px; }
 .nav-item {
@@ -149,22 +161,17 @@ h1, h2 { margin: 0; }
 /* Motion: the icon leans toward the page on hover and the row dips on press, so a click is felt before navigation lands. */
 .nav-item svg { flex: none; transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1); }
 @media (hover: hover) {
-  .nav-item:hover { background: rgba(255, 255, 255, 0.08); color: var(--text); }
+  .nav-item:not([data-active]):hover { background: rgba(255, 255, 255, 0.08); color: var(--text); }
   .nav-item:hover svg { transform: translateX(3px) scale(1.08); }
 }
 .nav-item:active { transform: scale(0.97); transition-duration: 0.08s; }
-.nav-item[aria-current="page"] svg { transform: scale(1.08); }
+.nav-item { position: relative; }
+.nav-item[data-active] svg { transform: scale(1.08); }
 .logout { width: 100%; background: none; cursor: pointer; font: inherit; font-size: 14.5px; font-weight: 500; }
 @media (hover: hover) {
   .logout:hover { background: rgba(255, 77, 61, 0.14); color: #ffc2bc; }
 }
-.nav-item[aria-current="page"] {
-  font-weight: 600;
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.22);
-  background: linear-gradient(100deg, rgba(59, 107, 255, 0.45), rgba(168, 85, 247, 0.3) 55%, rgba(255, 77, 61, 0.35));
-  box-shadow: 0 6px 20px rgba(80, 60, 255, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.25);
-}
+.nav-item[data-active] { color: #fff; }
 .usercard { margin-top: auto; border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
 .usercard + form { margin-top: -12px; }
 .icon-btn { width: 36px; height: 36px; padding: 0; flex: none; display: grid; place-items: center; }
