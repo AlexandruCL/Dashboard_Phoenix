@@ -53,7 +53,7 @@ export default function PontajePage() {
         )}
         <span className="hint">Se resetează la final de săptămână</span>
         <button type="button" className="btn btn-ghost btn-sm" disabled={busy} onClick={updateNames} title="Rulează și automat în fiecare noapte la 00:00">
-          {busy ? "Se actualizează…" : "Actualizează numele"}
+          {busy ? "Se actualizează…" : "Actualizează membrii"}
         </button>
       </div>
       <p className="hint" style={{ margin: 0 }}>
