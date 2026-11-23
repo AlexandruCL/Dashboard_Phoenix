@@ -66,9 +66,9 @@ export default function PontajePage() {
       ) : isLoading || !data ? (
         <Loading rows={8} framed />
       ) : (
-        <div className="glass scroll-x" style={{ borderRadius: 18 }}>
+        <div className="glass table-scroll" style={{ borderRadius: 18 }}>
           <div style={{ minWidth: 780, padding: "8px 10px 12px" }} role="table" aria-label="Pontaje săptămâna curentă">
-            <div role="row" className="th" style={{ display: "grid", gridTemplateColumns: COLS, gap: 6, padding: "10px 8px", borderBottom: "1px solid var(--line)" }}>
+            <div role="row" className="th sticky-head" style={{ display: "grid", gridTemplateColumns: COLS, gap: 6, padding: "10px 8px", borderBottom: "1px solid var(--line)" }}>
               <span role="columnheader">Callsign</span>
               <span role="columnheader">Nume</span>
               {data.days.map((d) => (

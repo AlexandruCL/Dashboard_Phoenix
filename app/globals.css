@@ -220,6 +220,9 @@ h1, h2 { margin: 0; }
 .row:hover { background: rgba(255, 255, 255, 0.05); }
 .th { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted-2); }
 .scroll-x { overflow-x: auto; }
+/* Table card scrolls both ways itself, so .sticky-head (Excel-style frozen row) has a scroller to stick to. */
+.table-scroll { flex: 1 1 auto; min-height: 0; overflow: auto; }
+.sticky-head { position: sticky; top: 0; z-index: 1; background: #12152f; }
 .sub { font-size: 11px; letter-spacing: 0.04em; color: var(--muted-2); }
 .ellipsis { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
@@ -447,6 +450,7 @@ select.field option { background: #0b0e2e; }
   .content { overflow: visible; padding: 20px 16px; }
   .fill { grid-auto-rows: auto; }
   .fit-scroll, .list-scroll { overflow: visible; }
+  .table-scroll { flex: none; max-height: 75dvh; }
   .chart-area { flex: none; height: 236px; }
   .btn.icon-btn { width: 44px; height: 44px; }
   .usercard + form { margin-top: -8px; }

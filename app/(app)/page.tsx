@@ -29,8 +29,8 @@ export default function DashboardPage() {
           <div className="glass stat">
             <span className="stat-label">Activi · ziua precedentă</span>
             <Tooltip
-              label={`${pctText(ay.pct)}% activi ieri: ${ay.active} din ${ay.eligible} polițiști`}
-              tip={`${ay.active} din ${ay.eligible} polițiști activi`}
+              label={`${pctText(ay.pct)}% activi ieri: ${ay.active} polițiști`}
+              tip={`${ay.active} polițiști activi ieri`}
             >
               <Ring pct={ay.pct} />
               <span className="num stat-big">
@@ -43,8 +43,8 @@ export default function DashboardPage() {
           <div className="glass stat">
             <span className="stat-label">Activi · săptămâna curentă</span>
             <Tooltip
-              label={`${pctText(aw.pct)}% activi săptămâna aceasta: în medie ${fmt1(aw.avg_active)} din ${fmt1(aw.avg_eligible)} pe zi`}
-              tip={`În medie ${fmt1(aw.avg_active)} din ${fmt1(aw.avg_eligible)} polițiști activi pe zi`}
+              label={`${pctText(aw.pct)}% activi săptămâna aceasta: în medie ${fmt1(aw.avg_active)} polițiști pe zi`}
+              tip={`În medie ${fmt1(aw.avg_active)} polițiști activi pe zi`}
             >
               <Ring pct={aw.pct} />
               <span className="num stat-big">
