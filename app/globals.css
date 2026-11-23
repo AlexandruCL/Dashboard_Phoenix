@@ -174,7 +174,7 @@ h1, h2 { margin: 0; }
 .nav-item[data-active] { color: #fff; }
 .usercard { margin-top: auto; border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
 .usercard + form { margin-top: -12px; }
-.icon-btn { width: 36px; height: 36px; padding: 0; flex: none; display: grid; place-items: center; }
+.btn.icon-btn { width: 36px; height: 36px; padding: 0; flex: none; display: grid; place-items: center; }
 .spin { animation: spin 0.9s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .avatar {
@@ -448,7 +448,7 @@ select.field option { background: #0b0e2e; }
   .fill { grid-auto-rows: auto; }
   .fit-scroll, .list-scroll { overflow: visible; }
   .chart-area { flex: none; height: 236px; }
-  .icon-btn { width: 44px; height: 44px; }
+  .btn.icon-btn { width: 44px; height: 44px; }
   .usercard + form { margin-top: -8px; }
   .page-title { font-size: 24px; }
 }
