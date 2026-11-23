@@ -84,7 +84,7 @@ function LastSync() {
   return (
     <span className="sub" style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
       Ultima sincronizare
-      <span className="ellipsis" title={text} style={{ color: "var(--text-2)" }}>
+      <span style={{ color: "var(--text-2)", overflowWrap: "anywhere" }}>
         {text}
       </span>
     </span>
@@ -169,7 +169,7 @@ export function Shell({ me, children }: { me: { name: string; level: Level }; ch
                 <span className="num avatar" aria-hidden="true">
                   {initials}
                 </span>
-                <div style={{ display: "flex", flexDirection: "column", gap: 3, minWidth: 0 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 3, minWidth: 0, flex: 1 }}>
                   <span className="ellipsis" style={{ fontSize: 13.5, fontWeight: 600 }}>
                     {me.name}
                   </span>
@@ -186,11 +186,9 @@ export function Shell({ me, children }: { me: { name: string; level: Level }; ch
                     </span>
                   </span>
                 </div>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <SyncButton />
-                <LastSync />
               </div>
+              <LastSync />
             </div>
             <form action="/api/auth/logout" method="post">
               <button type="submit" className="nav-item logout">
