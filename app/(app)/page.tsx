@@ -84,12 +84,11 @@ export default function DashboardPage() {
 }
 
 function Top5({ rows }: { rows: Dashboard["top5"] }) {
-  const cols = "74px minmax(0,1.3fr) minmax(0,1.1fr) 86px";
   return (
     <section className="glass panel" aria-labelledby="top5-title">
       <div className="panel-head">
         <h2 id="top5-title" className="num panel-title">
-          Top 5 pontaje
+          Top 10 pontaje
         </h2>
         <span className="hint">săptămâna curentă, minute</span>
       </div>
@@ -97,15 +96,14 @@ function Top5({ rows }: { rows: Dashboard["top5"] }) {
         <Empty>Nimeni nu s-a pontat încă săptămâna aceasta.</Empty>
       ) : (
         <div className="list-scroll">
-          <div style={{ minWidth: 400 }}>
-          <div className="th" style={{ display: "grid", gridTemplateColumns: cols, gap: 8, padding: "0 8px 6px" }}>
+          <div className="th top-row" style={{ padding: "0 8px 6px" }}>
             <span>Callsign</span>
             <span>Nume</span>
             <span>Grad</span>
             <span style={{ textAlign: "right" }}>Total min</span>
           </div>
           {rows.map((t) => (
-            <div key={t.callsign} className="row" style={{ display: "grid", gridTemplateColumns: cols, gap: 8, alignItems: "center", padding: "6px 8px", fontSize: 14 }}>
+            <div key={t.callsign} className="row top-row" style={{ padding: "6px 8px", fontSize: 14 }}>
               <Pill callsign={t.callsign} grade={t.grade} />
               <span className="ellipsis">{t.name}</span>
               <span className="ellipsis" style={{ color: "var(--muted)", fontSize: 12.5 }}>
@@ -119,7 +117,6 @@ function Top5({ rows }: { rows: Dashboard["top5"] }) {
               </div>
             </div>
           ))}
-          </div>
         </div>
       )}
     </section>
@@ -216,7 +213,7 @@ function DashboardSkeleton() {
       <div className="grid-2">
         <section className="glass panel">
           <Bone w="40%" h={18} />
-          <Loading rows={5} />
+          <Loading rows={10} />
         </section>
         <section className="glass panel">
           <Bone w="50%" h={18} />

@@ -101,7 +101,7 @@ Browser ──HTTPS──► Next.js on Vercel
 | Activi · ziua precedentă (%) | Members outside conducere who were active yesterday ÷ members outside conducere who were not on leave yesterday. Hover shows the count ("35 din 44 polițiști activi"). |
 | Activi · săptămâna curentă (%) | Average of the daily % over the elapsed days of the week (Sunday … yesterday). Hover shows the average count per day. |
 | Cele mai active grade (%) | Per grade: active member-days ÷ member-days not on leave, over the elapsed days. Hover shows the grade name and %. |
-| Top 5 pontaje | Highest **M TOTAL** this week, **including conducere**. |
+| Top 10 pontaje | Highest **M TOTAL** this week, **including conducere**. |
 | Medie pontaje (Evidență membri) | Sheet column **E (TOTAL / ZI)**: total ÷ elapsed days, leave days excluded. If the cell says "Se calculează…" or `/`, show "—". |
 
 ## 5. Access control
@@ -128,7 +128,7 @@ Layout: a glass window, smaller than the screen, over the Phoenix logo. Sidebar 
 
 | Page | Content |
 |---|---|
-| Dashboard | Cards: Birou conducere (7 + grade breakdown), Activi ieri (% ring, hover = count), Activi săptămâna (% ring, hover = average count), Efectiv total. Grade strip. Top 5 pontaje (CS, name, grade, total min, bar vs. 700). "Cele mai active grade" bar chart (hover = grade + %). |
+| Dashboard | Cards: Birou conducere (7 + grade breakdown), Activi ieri (% ring, hover = count), Activi săptămâna (% ring, hover = average count), Efectiv total. Grade strip. Top 10 pontaje (CS, name, grade, total min, bar vs. 700). "Cele mai active grade" bar chart (hover = grade + %). |
 | Pontaje | Current week only: Callsign, Nume, Du…Sa, Total. `CO` cells in blue, under-target cells in orange, zero in red, live (unsent) days marked. Search. Note: "Se resetează la final de săptămână". |
 | Concedii | Leaves that overlap the current week: Callsign, Nume, start, end, a Du–Sa bar of the leave days, status (În desfășurare / Încheiat / Programat). |
 | Evidență membri | Groups per grade (collapsible) as in the sheet: Callsign, Nume, Grad, Data intrare, Medie pontaje, CONCEDIU tag. Search. |

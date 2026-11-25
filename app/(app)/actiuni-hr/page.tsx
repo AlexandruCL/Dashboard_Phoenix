@@ -113,7 +113,7 @@ function OpenTab() {
         <Empty>Nimeni nu este pontat acum.</Empty>
       ) : (
         <div className="scroll-x">
-          <div style={{ minWidth: 640 }}>
+          <div className="open-table">
             <div className="th" style={{ display: "grid", gridTemplateColumns: cols, gap: 10, padding: 8 }}>
               <span>Callsign</span>
               <span>Nume</span>
@@ -122,7 +122,7 @@ function OpenTab() {
               <span style={{ textAlign: "right" }}>Acțiune</span>
             </div>
             {data.rows.map((r) => (
-              <div key={r.uid + r.clock_in} className="row" style={{ display: "grid", gridTemplateColumns: cols, gap: 10, padding: 8, fontSize: 14, alignItems: "center" }}>
+              <div key={r.uid + r.clock_in} className="row open-row" style={{ gridTemplateColumns: cols }}>
                 <span>
                   <Pill callsign={r.callsign} grade={r.grade ?? ""} />
                 </span>
@@ -130,10 +130,10 @@ function OpenTab() {
                   <span className="ellipsis">{r.name}</span>
                   {r.grade && <span className="sub">{r.grade}</span>}
                 </span>
-                <span className="num" style={{ fontWeight: 600 }}>
+                <span className="num" data-label="Început" style={{ fontWeight: 600 }}>
                   {hhmm(r.clock_in)}
                 </span>
-                <span className="num" style={{ fontWeight: 600, color: "var(--blue-soft)" }}>
+                <span className="num" data-label="Durată" style={{ fontWeight: 600, color: "var(--blue-soft)" }}>
                   {duration(r.minutes)}
                 </span>
                 <span style={{ display: "flex", justifyContent: "flex-end" }}>
